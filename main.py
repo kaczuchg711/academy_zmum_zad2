@@ -30,7 +30,11 @@ Dane uczące zawierają nagrania audio pochodzące z rozmowy pomiędzy osobą A 
 
 W trakcie realizacji zadania należy wykonań następujące podzadania:
 1. Podzielić próbki na dane uczące i testowe.
-2. Zdefiniować __dwa__ modele głebokiej rekurencyjnej sieci neuronowej według własnego pomysłu. W pierwszym modelu dzwięk reprezentowany powinien być za pomocą szeregu czasowego, a w drugim za pomocą spektogramu MFCC (warto wykorzystać pakiet [librosa](https://librosa.github.io/librosa/generated/librosa.feature.mfcc.html). Oba modele powinny rozwiązywać problem klasyfikacji, czy dana próbka pochodzi od osoby A czy B.
+2. Zdefiniować __dwa__ modele głebokiej rekurencyjnej sieci neuronowej według własnego pomysłu.
+ W pierwszym modelu dzwięk reprezentowany powinien być za pomocą szeregu czasowego,
+ a w drugim za pomocą spektogramu MFCC (warto wykorzystać pakiet
+ [librosa](https://librosa.github.io/librosa/generated/librosa.feature.mfcc.html).
+ Oba modele powinny rozwiązywać problem klasyfikacji, czy dana próbka pochodzi od osoby A czy B.
 3. Wytrenować zdefiniowane sieci na danych uczących.
 4. Ocenić skuteczność i porównać działanie modeli na danych testowych.
 5. Najlepsze ze stworzonych modeli zapisać do pliku i przesłać na elf'a razem z notatnikiem.
@@ -61,9 +65,6 @@ print('Keras version:', tf.keras.__version__)
 
 import sys
 
-path_nb = r''
-sys.path.append(path_nb)
-
 """## Przygotowanie danych"""
 
 import os
@@ -74,34 +75,28 @@ import logging
 tf.get_logger().setLevel(logging.ERROR)
 files = []
 folders = []
-for (path, dirnames, filenames) in os.walk(path_nb + 'dataset'):
+for (path, dirnames, filenames) in os.walk('dataset'):
     folders.extend(os.path.join(path, name) for name in dirnames)
     files.extend(os.path.join(path, name) for name in filenames)
-
-print(files)
-print(folders)
-
-print(os.listdir(path_nb + 'dataset/A'))
 
 data_y = []
 data_sr = []
 labels = []
-for dir in os.listdir(path_nb + 'dataset'):
-    for data_file in os.listdir(path_nb + 'dataset/' + dir):
-        a = path_nb + 'dataset/' + dir + "/" + data_file
-        print(a)
-        y, sr = librosa.load(path_nb + 'dataset/' + dir + "/" + data_file)
+
+for dir in os.listdir('dataset'):
+    for data_file in os.listdir('dataset/' + dir):
+        amplitude, sr = librosa.load('dataset/' + dir + "/" + data_file)
         data_sr.append(sr)
-        data_y.append(y)
+        data_y.append(amplitude)
         labels.append(dir)
 
-print(data_y)
-print(data_sr)
-print(labels)
+# amplitude, time reprezentation
+amplitude, sr = librosa.load('dataset/' + "A" + "/" + "A13.wav")
+librosa.display.waveplot(amplitude, sr=sr, x_axis='time', color='purple', offset=0.0)
+plt.show()
 
-librosa.display.waveplot(data_y[10], sr=data_sr[0], x_axis='time', color='purple', offset=0.0)
-
-y = data_y[0]
+# f, time reprezentation
+y = amplitude
 hop_length = 512  # the default spacing between frames
 n_fft = 255  # number of samples
 # cut the sample to the relevant times
@@ -116,17 +111,14 @@ plt.show()
 
 """MFCC"""
 
-pathToDataset = path_nb + 'dataset'
+pathToDataset = 'dataset'
 class_names = os.listdir(pathToDataset)
 audio_paths = []
 labels = []
 for label, name in enumerate(class_names):
     dir_path = Path(pathToDataset) / name
-    speaker_sample_paths = [
-        os.path.join(dir_path, filepath)
-        for filepath in os.listdir(dir_path)
-        if filepath.endswith(".wav")
-    ]
+    speaker_sample_paths = [os.path.join(dir_path, filepath) for filepath in os.listdir(dir_path) if
+                            filepath.endswith(".wav")]
     audio_paths += speaker_sample_paths
     labels += [label] * len(speaker_sample_paths)
 
@@ -153,7 +145,7 @@ y = np.array(featuresdf.class_label.tolist())
 le = LabelEncoder()
 yy = to_categorical(le.fit_transform(y))
 
-"""Podział na dane trneujące i testowe
+"""Podział na dane trenujące i testowe
 
 """
 
@@ -164,20 +156,17 @@ x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
 """Model
 
 """
-
-model = Sequential()
-model.add(Input(shape=(x_train.shape[1], x_train.shape[2],)))
 from keras.layers import LSTM
 from keras import backend as K
 
-
-
+model = Sequential()
+model.add(Input(shape=(x_train.shape[1], x_train.shape[2],)))
 model.add(LSTM(256, return_sequences=False))
 model.add(Dense(256, activation='relu'))
 model.add(Dropout(0.3))
 model.add(Dense(2, activation='softmax'))
 
-cb = [ModelCheckpoint(path_nb + 'modelMFCC.h5', monitor='val_accuracy', save_best_only=True)]
+cb = [ModelCheckpoint('modelMFCC.h5', monitor='val_accuracy', save_best_only=True)]
 model.compile(loss='categorical_crossentropy', metrics='accuracy', optimizer='adam')
 num_epochs = 15
 num_batch_size = 3
@@ -188,7 +177,7 @@ model.fit(x_train, y_train, batch_size=num_batch_size, epochs=num_epochs, valida
 
 """
 
-fmodel = tf.keras.models.load_model(path_nb + 'modelMFCC.h5')
+fmodel = tf.keras.models.load_model('modelMFCC.h5')
 fmodel.compile(loss='categorical_crossentropy', metrics='accuracy', optimizer='adam')
 result = fmodel.evaluate(x_test, y_test, verbose=0)
 print("Accuracy = {0:.0%}".format(result[1]))
@@ -229,14 +218,14 @@ model.add(Dropout(0.3))
 model.add(Dense(2, activation='softmax'))
 model.summary()
 
-cb = [ModelCheckpoint(path_nb + 'modelSTFTS.h5', monitor='val_accuracy', save_best_only=True)]
+cb = [ModelCheckpoint('modelSTFTS.h5', monitor='val_accuracy', save_best_only=True)]
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
 num_epochs = 50
 num_batch_size = 30
 model.fit(x_train, y_train, batch_size=num_batch_size, epochs=num_epochs, validation_data=(x_test, y_test), verbose=1,
           callbacks=cb)
 
-fmodel = tf.keras.models.load_model(path_nb + 'modelSTFTS.h5')
+fmodel = tf.keras.models.load_model('modelSTFTS.h5')
 fmodel.compile(loss='categorical_crossentropy', metrics='accuracy', optimizer='adam')
 result = fmodel.evaluate(x_test, y_test, verbose=0)
 print("Accuracy = {0:.0%}".format(result[1]))
