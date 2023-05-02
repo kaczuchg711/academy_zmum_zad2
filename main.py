@@ -79,15 +79,15 @@ for (path, dirnames, filenames) in os.walk('dataset'):
     folders.extend(os.path.join(path, name) for name in dirnames)
     files.extend(os.path.join(path, name) for name in filenames)
 
-data_y = []
-data_sr = []
+data_amplitudes = []
+data_sampling_rate = []
 labels = []
 
 for dir in os.listdir('dataset'):
     for data_file in os.listdir('dataset/' + dir):
         amplitude, sr = librosa.load('dataset/' + dir + "/" + data_file)
-        data_sr.append(sr)
-        data_y.append(amplitude)
+        data_sampling_rate.append(sr)
+        data_amplitudes.append(amplitude)
         labels.append(dir)
 
 # amplitude, time reprezentation
