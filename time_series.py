@@ -17,7 +17,7 @@ import os
 print('Numpy version:', np.__version__)
 print('Tensorflow version:', tf.__version__)
 print('Keras version:', tf.keras.__version__)
-for i in range(10):
+for i in range(1):
     data_amplitudes = []
     data_sampling_rate = []
     labels = []
